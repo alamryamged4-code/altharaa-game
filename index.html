@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101827"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>الثراء | إدارة شركة ألعاب</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#151f31;--line:#29364c;--gold:#f4c45e;--muted:#a9b6c9;--green:#48d597;--red:#ff7777}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(145deg,#101c30,#080d17);color:#f5f7fb;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:18px;max-width:900px;margin:auto}
+header{text-align:center;padding:18px 0}h1{margin:0;color:var(--gold);font-size:34px}header p{color:var(--muted);margin:7px 0}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat,.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px}.stat small{color:var(--muted)}.stat strong{display:block;font-size:23px;margin-top:5px;color:var(--gold)}
+h2{font-size:18px;margin:0 0 12px;color:#f5d58b}.panel{margin-top:13px}.actions{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+button,select{font:inherit;border:1px solid #43536d;border-radius:11px;padding:11px;background:#223149;color:white;width:100%}button{cursor:pointer}button.primary{background:#a87922;border-color:#d7a943;color:#160f04;font-weight:700}button:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.row:last-child{border:0}.muted{color:var(--muted);font-size:13px}.good{color:var(--green)}.bad{color:var(--red)}
+#log{max-height:150px;overflow:auto;font-size:13px;color:var(--muted);line-height:1.8}
+@media(min-width:650px){.stats{grid-template-columns:repeat(4,1fr)}.actions{grid-template-columns:repeat(3,1fr)}}
+</style></head>
+<body>
+<header><h1>الثراء</h1><p>ابدأ من مكتب صغير… وابنِ شركة ألعاب عالمية</p></header>
+<section class="stats">
+<div class="stat"><small>رأس المال</small><strong id="cash">$100,000</strong></div>
+<div class="stat"><small>اليوم</small><strong id="day">1</strong></div>
+<div class="stat"><small>الموظفون</small><strong id="staff">0</strong></div>
+<div class="stat"><small>الفروع</small><strong id="branchesCount">1</strong></div>
+</section>
+<section class="panel"><h2>المقر الرئيسي</h2><div class="row"><span>المكتب الرئيسي</span><span class="good">يعمل</span></div><div class="row"><span>الألعاب المطورة</span><b id="products">0</b></div><div class="row"><span>الدخل اليومي</span><b id="income">$0</b></div><div class="row"><span>الرواتب اليومية</span><b id="payroll">$0</b></div></section>
+<section class="panel"><h2>إدارة الموظفين</h2><div class="actions">
+<button onclick="hire('مطور ألعاب',500)">توظيف مطور ألعاب — $500/يوم</button>
+<button onclick="hire('مصمم ألعاب',400)">توظيف مصمم ألعاب — $400/يوم</button>
+<button onclick="hire('مسوّق',350)">توظيف مسوّق — $350/يوم</button>
+</div><div id="employees"></div></section>
+<section class="panel"><h2>تطوير المنتجات</h2><p class="muted">تطوير لعبة جديدة يكلف 5,000$ ويتطلب مطور ألعاب ومصمم ألعاب. كل لعبة ناجحة تحقق دخلاً يومياً.</p><button class="primary" onclick="develop()">تطوير لعبة جديدة — $5,000</button></section>
+<section class="panel"><h2>فتح فروع جديدة</h2><p class="muted">تكلفة تأسيس الفرع 20,000$. يمكنك تعيين مدير وموظفين لكل فرع لاحقاً.</p><div class="actions"><select id="city"><option>عدن</option><option>صنعاء</option><option>تعز</option><option>الحديدة</option><option>الرياض</option><option>دبي</option><option>القاهرة</option><option>لندن</option><option>نيويورك</option></select><button class="primary" onclick="openBranch()">افتتاح فرع — $20,000</button></div><div id="branches"></div></section>
+<section class="panel"><h2>إدارة الشركة</h2><div class="actions"><button class="primary" onclick="nextDay()">إنهاء اليوم التالي</button><button onclick="save(true)">حفظ التقدم</button><button onclick="resetGame()">بدء لعبة جديدة</button></div><p class="muted">يتم الحفظ تلقائياً على هذا الجهاز. اللعبة تعمل دون إنترنت بعد تحميلها مرة واحدة.</p></section>
+<section class="panel"><h2>سجل الشركة</h2><div id="log">تم تأسيس شركتك. حظاً موفقاً!</div></section>
+<script>
+const initial=()=>({cash:100000,day:1,employees:[],products:0,branches:[],logs:['تم تأسيس شركتك برأس مال 100,000$.']});
+let s;try{s=JSON.parse(localStorage.getItem('altharaa-save'))||initial()}catch(e){s=initial()}
+const money=n=>'$'+Math.round(n).toLocaleString('en-US');
+function note(t){s.logs.unshift('اليوم '+s.day+': '+t);s.logs=s.logs.slice(0,15)}
+function save(show=false){localStorage.setItem('altharaa-save',JSON.stringify(s));render();if(show)alert('تم حفظ تقدمك بنجاح.')}
+function hire(role,salary){if(s.cash<salary*5)return alert('لا يوجد رصيد كافٍ لتوظيف هذا الموظف.');s.cash-=salary*5;s.employees.push({role,salary});note('تم توظيف '+role+'.');save()}
+function develop(){if(s.cash<5000)return alert('الرصيد غير كافٍ.');if(!s.employees.some(e=>e.role==='مطور ألعاب')||!s.employees.some(e=>e.role==='مصمم ألعاب'))return alert('تحتاج إلى مطور ألعاب ومصمم ألعاب أولاً.');s.cash-=5000;s.products++;note('تم إطلاق لعبة جديدة بنجاح.');save()}
+function openBranch(){let city=document.getElementById('city').value;if(s.branches.some(b=>b.city===city))return alert('لديك فرع في هذه المدينة بالفعل.');if(s.cash<20000)return alert('تحتاج إلى 20,000$ لافتتاح الفرع.');s.cash-=20000;s.branches.push({city,manager:false});note('تم افتتاح فرع في '+city+'.');save()}
+function nextDay(){let income=s.products*900+s.branches.length*250;let payroll=s.employees.reduce((a,e)=>a+e.salary,0)+s.branches.filter(b=>b.manager).length*600;s.cash+=income-payroll;s.day++;note('إيرادات '+money(income)+'، رواتب '+money(payroll)+'.');save()}
+function manager(i){if(s.cash<1500)return alert('الرصيد غير كافٍ لتعيين المدير.');if(s.branches[i].manager)return;s.cash-=1500;s.branches[i].manager=true;note('تم تعيين مدير لفرع '+s.branches[i].city+'.');save()}
+function resetGame(){if(confirm('هل تريد حذف تقدمك والبدء من جديد؟')){s=initial();save()}}
+function render(){document.getElementById('cash').textContent=money(s.cash);document.getElementById('day').textContent=s.day;document.getElementById('staff').textContent=s.employees.length;document.getElementById('branchesCount').textContent=s.branches.length+1;document.getElementById('products').textContent=s.products;document.getElementById('income').textContent=money(s.products*900+s.branches.length*250);document.getElementById('payroll').textContent=money(s.employees.reduce((a,e)=>a+e.salary,0)+s.branches.filter(b=>b.manager).length*600);
+document.getElementById('employees').innerHTML=s.employees.map(e=>'<div class="row"><span>'+e.role+'</span><span class="muted">'+money(e.salary)+' / يوم</span></div>').join('')||'<p class="muted">لم توظف أي موظف بعد.</p>';
+document.getElementById('branches').innerHTML=s.branches.map((b,i)=>'<div class="row"><span>فرع '+b.city+'<br><small class="muted">'+(b.manager?'مدير معيّن':'لا يوجد مدير')+'</small></span><button style="width:auto" onclick="manager('+i+')" '+(b.manager?'disabled':'')+'>'+(b.manager?'تم تعيين المدير':'تعيين مدير — $1,500')+'</button></div>').join('')||'<p class="muted">لم تفتح فروعاً بعد.</p>';
+document.getElementById('log').innerHTML=s.logs.map(x=>'• '+x).join('<br>')}
+render();if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+</script></body></html>
